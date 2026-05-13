@@ -15,6 +15,10 @@
 #import <IntentsUI/IntentsUI.h>
 #import <CoreSpotlight/CoreSpotlight.h>
 
+#ifdef RCT_NEW_ARCH_ENABLED
+#import <React/RCTTurboModule.h>
+#endif
+
 enum MutationStatus {
     MutationStatusCancelled,
     MutationStatusAdded,
@@ -111,7 +115,7 @@ API_AVAILABLE(ios(13.0))
 - (void)handleReceivedShortcutNotification:(NSNotification *)notification
 {
     NSDictionary *activityInfo = notification.userInfo;
-    
+
     if (_hasListeners) {
         [self sendEventWithName:@"SiriShortcutListener"
                            body:activityInfo];
@@ -123,7 +127,7 @@ API_AVAILABLE(ios(13.0))
 - (void)startObserving
 {
     _hasListeners = YES;
-    
+
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     [notificationCenter addObserver:self
                            selector:@selector(handleReceivedShortcutNotification:)
@@ -134,7 +138,7 @@ API_AVAILABLE(ios(13.0))
 - (void)stopObserving
 {
     _hasListeners = NO;
-    
+
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     [notificationCenter removeObserver:self
                                   name:@"shortcutReceived"
@@ -154,7 +158,7 @@ RCT_EXPORT_METHOD(getInitialShortcut:(RCTPromiseResolveBlock)resolve
     // Extract the NSUserActivity data from launchOptions
     NSDictionary *userActivityDictionary = self.bridge.launchOptions[UIApplicationLaunchOptionsUserActivityDictionaryKey];
     NSDictionary * _Nullable shortcutInfo = nil;
-    
+
     // If there was no NSUserActivity in launchOptions, the app was not launched from a shortcut
     if (userActivityDictionary) {
         NSArray<NSString *> *activityTypes = [NSBundle mainBundle].infoDictionary[@"NSUserActivityTypes"];
@@ -168,7 +172,7 @@ RCT_EXPORT_METHOD(getInitialShortcut:(RCTPromiseResolveBlock)resolve
             };
         }
     }
-    
+
     resolve(RCTNullIfNil(shortcutInfo));
 }
 
@@ -205,7 +209,7 @@ RCT_EXPORT_METHOD(clearShortcutsWithIdentifiers:(NSArray *)persistentIdentifiers
 RCT_EXPORT_METHOD(donateShortcut:(NSDictionary *)options)
 {
     __block NSUserActivity *activity = [RCTConvert NSUserActivity:options];
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         [UIApplication sharedApplication]
             .keyWindow
@@ -219,12 +223,12 @@ RCT_EXPORT_METHOD(suggestShortcuts:(NSArray<NSDictionary *> *)shortcutOptionsArr
 {
     if (@available(iOS 12.0, *)) {
         NSMutableArray<INShortcut *> *suggestions = [NSMutableArray new];
-        
+
         for (NSDictionary *options in shortcutOptionsArr) {
             NSUserActivity *activity = [RCTConvert NSUserActivity:options];
             [suggestions addObject:[[INShortcut alloc] initWithUserActivity:activity]];
         }
-        
+
         [[INVoiceShortcutCenter sharedCenter] setShortcutSuggestions:suggestions];
     }
 }
@@ -234,9 +238,9 @@ RCT_EXPORT_METHOD(presentShortcut:(NSDictionary *)options
 {
     if (@available(iOS 12.0, *)) {
         NSUserActivity *activity = [RCTConvert NSUserActivity:options];
-    
+
         __block INShortcut *shortcut = [[INShortcut alloc] initWithUserActivity:activity];
-        
+
         [self fetchRecordedVoiceShortcutsWithCompletion:^(NSArray<INVoiceShortcut *> * _Nullable voiceShortcuts,
                                                           NSError * _Nullable error) {
             if (voiceShortcuts == nil) {
@@ -250,7 +254,7 @@ RCT_EXPORT_METHOD(presentShortcut:(NSDictionary *)options
                     ]);
                     return;
                 }
-                
+
                 callback(@[
                     @{
                         @"status": MutationStatusToString(MutationStatusCancelled),
@@ -259,7 +263,7 @@ RCT_EXPORT_METHOD(presentShortcut:(NSDictionary *)options
                 ]);
                 return;
             }
-            
+
             self->_presentShortcutCallback = callback;
             __block INVoiceShortcut *addedVoiceShortcut;
             for (INVoiceShortcut *voiceShortcut in voiceShortcuts) {
@@ -270,7 +274,7 @@ RCT_EXPORT_METHOD(presentShortcut:(NSDictionary *)options
                     break;
                 }
             }
-            
+
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (addedVoiceShortcut != nil) {
                     // The shortcut was already added, so we present a form to edit it
@@ -306,18 +310,18 @@ RCT_EXPORT_METHOD(getShortcuts:(RCTPromiseResolveBlock)resolve
                        error);
                 return;
             }
-            
+
             if (voiceShortcuts == nil) {
                 reject(@"get_shortcuts_failure",
                        @"An unknown error has occurred. Please open an issue on GitHub.",
                        nil);
                 return;
             }
-            
+
             NSMutableArray<NSDictionary<NSString *, id> *> *result = [NSMutableArray new];
             for (INVoiceShortcut *voiceShortcut in voiceShortcuts) {
                 NSDictionary<NSString *, id> * _Nullable options = nil;
-                
+
                 NSUserActivity * _Nullable userActivity = voiceShortcut.shortcut.userActivity;
                 if (userActivity != nil) {
                     options = @{
@@ -337,7 +341,7 @@ RCT_EXPORT_METHOD(getShortcuts:(RCTPromiseResolveBlock)resolve
                         @"suggestedInvocationPhrase": RCTNullIfNil(userActivity.suggestedInvocationPhrase),
                     };
                 }
-                
+
                 [result addObject:@{
                     @"identifier": voiceShortcut.identifier.UUIDString,
                     @"phrase": voiceShortcut.invocationPhrase,
@@ -362,12 +366,12 @@ API_AVAILABLE(ios(12.0))
             completion(nil, error);
             return;
         }
-        
+
         if (voiceShortcuts != nil) {
             completion(voiceShortcuts, nil);
             return;
         }
-        
+
         completion(nil, nil);
     }];
 }
@@ -381,7 +385,7 @@ API_AVAILABLE(ios(12.0))
             [self->_presenterViewController dismissViewControllerAnimated:YES completion:nil];
             self->_presenterViewController = nil;
         }
-        
+
         if (self->_presentShortcutCallback != nil) {
             NSString *invocationPhrase = nil;
             if (shortcut != nil) {
@@ -449,5 +453,13 @@ API_AVAILABLE(ios(12.0))
                        voiceShortcut:nil];
     [self setEditingVoiceShortcut:nil];
 }
+
+#ifdef RCT_NEW_ARCH_ENABLED
+- (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
+    (const facebook::react::ObjCTurboModule::InitParams &)params
+{
+    return std::make_shared<facebook::react::NativeRNSiriShortcutsSpecJSI>(params);
+}
+#endif
 
 @end

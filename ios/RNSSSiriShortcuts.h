@@ -15,9 +15,17 @@
 
 #import <React/RCTEventEmitter.h>
 
+#ifdef RCT_NEW_ARCH_ENABLED
+#import <RNSiriShortcutsSpec/RNSiriShortcutsSpec.h>
+#endif
+
 NS_ASSUME_NONNULL_BEGIN
 
+#ifdef RCT_NEW_ARCH_ENABLED
+@interface RNSSSiriShortcuts : RCTEventEmitter <NativeRNSiriShortcutsSpec>
+#else
 @interface RNSSSiriShortcuts : RCTEventEmitter
+#endif
 
 + (BOOL)application:(nonnull UIApplication *)application
     continueUserActivity:(nonnull NSUserActivity *)userActivity
