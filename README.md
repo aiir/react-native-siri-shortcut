@@ -1,32 +1,41 @@
-# React Native Siri Shortcut
+# react-native-siri-shortcut (fork)
 
-This module lets you use Siri Shortcuts inside your React Native app.
+A React Native library for integrating iOS Siri Shortcuts into your app. It lets you donate shortcuts based on user activity, suggest shortcuts proactively, present the system Add to Siri sheet, and handle shortcut activations — both when the app is already running and on cold launch. iOS only; all calls are no-ops on Android.
 
-<p align="center">
-  <img src="./docs/static/img/icons8-siri-color.svg" width="200">
-</p>
-<p align="center">
-  <a href="https://www.npmjs.com/package/react-native-siri-shortcut">
-    <img src="https://img.shields.io/npm/v/react-native-siri-shortcut" />
-  </a>
-  <a href="https://www.npmjs.com/package/react-native-siri-shortcut">
-    <img src="https://img.shields.io/npm/dw/react-native-siri-shortcut" />
-  </a>
-</p>
-<p align="center">
-<a href="https://gustash.github.io/react-native-siri-shortcut">Read the Docs</a>
-</p>
+This is a fork of [Gustash/react-native-siri-shortcut](https://github.com/Gustash/react-native-siri-shortcut).
+
+## Why forked
+
+The upstream package does not support React Native's New Architecture (TurboModules / Fabric). This fork adds dual-architecture support so the package works with both Old and New Architecture without breaking existing behaviour. It also removes `RCTBridge+UIScene` files that cause build errors with modern React Native versions.
+
+Changes over upstream:
+
+- TurboModule codegen spec (`src/NativeRNSiriShortcuts.ts`)
+- Fabric native component spec (`src/RNSSAddToSiriButtonNativeComponent.ts`)
+- `codegenConfig` added to `package.json`
+- Podspec updated to use `install_modules_dependencies` and bumped iOS minimum to 13.0
+- `RNSSSiriShortcuts.m` → `.mm` with `getTurboModule:` behind `RCT_NEW_ARCH_ENABLED`
+- `RNSSAddToSiriButtonViewManager.m` → `.mm` for legacy interop compatibility
+- `RCTBridge+UIScene` files removed
+
+## Installation
+
+Install directly from this repository:
+
+```sh
+npm install https://github.com/aiir/react-native-siri-shortcut
+```
+
+Then run `pod install` in your `ios/` directory.
+
+## Usage
+
+See the [upstream documentation](https://gustash.github.io/react-native-siri-shortcut) for the full API reference. The public API is unchanged from upstream.
 
 ## Example project
 
-Feel free to clone this repo and run the `example/` project.
-
-Run `npm install` or `yarn install` in the `example/` directory.
-
-Run `pod install` in the `example/ios/` directory.
-
-Build the app in XCode.
-
-### Mentions
-
-<a target="_blank" href="https://icons8.com/icon/kfEmwYAkH0Em/siri">Siri</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
+```sh
+cd example && npm install
+cd example/ios && pod install
+# Open example/ios in Xcode and build/run
+```

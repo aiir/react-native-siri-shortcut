@@ -33,3 +33,4 @@ flow-typed/
 
 .vscode/
 .idea/
+.claude/
